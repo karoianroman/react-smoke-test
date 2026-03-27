@@ -1,0 +1,31 @@
+name: 🚀 pnpm Fast React CI
+
+on:
+  push:
+    branches: [ main, master ] # Тригериться при пуші в main або master
+
+jobs:
+  build:
+    name: 🏗️ Збірка React-проєкту
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Отримання коду з репозиторію
+        uses: actions/checkout@v4
+
+      - name: 📦 Встановлення pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: 🟢 Налаштування Node.js (з кешем pnpm)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm' # 👈 Це пришвидшить наступні білди!
+
+      - name: 📥 Встановлення бібліотек
+        run: pnpm install --frozen-lockfile
+
+      - name: 🛠️ Збірка проєкту (Build)
+        run: pnpm run build
