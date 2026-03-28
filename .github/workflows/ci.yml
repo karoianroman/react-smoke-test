@@ -72,6 +72,6 @@ jobs:
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
-          image: ${{ env.REGION }}-docker-pkg-dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY
+          image: ${{ env.REGION }}-docker.pkg-dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY
             }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
           flags: '--allow-unauthenticated' # Робить сайт публічним
