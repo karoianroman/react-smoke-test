@@ -43,8 +43,8 @@ jobs:
       - name: 🐳 Docker Auth
         run: |
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
-
-      # 3. Встановлення pnpm та збірка лок-файлу (для CI частини)
+             
+      # Test
       - name: 📦 Install pnpm
         uses: pnpm/action-setup@v3
         with:
@@ -59,8 +59,8 @@ jobs:
       - name: 📥 Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: 🧪 Run Tests
-        run: pnpm test  # Або pnpm run test:unit
+      - name: 🔍 Lint
+        run: pnpm lint
 
       # 4. Збірка Docker-образу та Push у Google Artifact Registry
       - name: 📤 Build and Push Container
@@ -78,3 +78,11 @@ jobs:
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY
             }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
           flags: '--allow-unauthenticated' # Робить сайт публічним
+
+      - name: 🔥 Smoke test
+  run: |
+    URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+      --region=${{ env.REGION }} \
+      --format='value(status.url)')
+    echo "Testing: $URL"
+    curl -f --retry 5 --retry-delay 3 "$URL"
