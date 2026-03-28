@@ -1,14 +1,16 @@
 name: 🚀 Deploy to Google Cloud Run
 
-on:
+'on':
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }} # Додай у GitHub Secrets
-  REGION: europe-west1                     # Обирай ближчий до тебе регіон
-  SERVICE_NAME: react-app                  # Назва сервісу в Cloud Run
-  REPOSITORY: react-repo               # Назва репозиторію в Artifact Registry
+  REGION: europe-west1 # Обирай ближчий до тебе регіон
+  SERVICE_NAME: react-app # Назва сервісу в Cloud Run
+  REPOSITORY: react-repo # Назва репозиторію в Artifact Registry
 
 jobs:
   deploy:
@@ -25,7 +27,10 @@ jobs:
       - name: 🔐 Google Auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          #credentials_json: ${{ secrets.GCP_SA_KEY }}
+          # Скопіюй цей шлях зі сторінки провайдера в GCP
+          workload_identity_provider: 'projects/992838171690/locations/global/workloadIdentityPools/github-actions-pool/providers/react-smoke-test'
+          service_account: 'github-actions-sa@repo-490410.iam.gserviceaccount.com'
 
       - name: ⚙️ Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -45,7 +50,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+          cache: pnpm
 
       - name: 📥 Install dependencies
         run: pnpm install --frozen-lockfile
@@ -63,5 +68,6 @@ jobs:
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
-          image: ${{ env.REGION }}-docker-pkg-dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          image: ${{ env.REGION }}-docker-pkg-dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY
+            }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
           flags: '--allow-unauthenticated' # Робить сайт публічним
