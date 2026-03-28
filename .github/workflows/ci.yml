@@ -31,4 +31,4 @@ jobs:
         run: pnpm run build
       
             - name: 🐳 Build Docker Image
-        run: docker build -t my-react-app:${{ github.sha }} .
+        run: docker build -t react-app:${{ github.sha }} .
