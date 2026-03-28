@@ -1,34 +1,67 @@
-name: 🚀 pnpm Fast React CI
+name: 🚀 Deploy to Google Cloud Run
 
 on:
   push:
-    branches: [ main, master ] # Тригериться при пуші в main або master
+    branches: [ main, master ]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }} # Додай у GitHub Secrets
+  REGION: europe-west1                     # Обирай ближчий до тебе регіон
+  SERVICE_NAME: react-app                  # Назва сервісу в Cloud Run
+  REPOSITORY: react-repo               # Назва репозиторію в Artifact Registry
 
 jobs:
-  build:
-    name: 🏗️ Збірка React-проєкту
+  deploy:
+    name: 🏗️ Build & Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Отримання коду з репозиторію
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 📦 Встановлення pnpm
+      # 1. Авторизація в Google Cloud
+      # Рекомендую використовувати Workload Identity Federation (це безпечніше)
+      # Але для початку можна використати JSON ключ сервісного акаунта в секретах
+      - name: 🔐 Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: ⚙️ Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # 2. Налаштування Docker для Artifact Registry
+      - name: 🐳 Docker Auth
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      # 3. Встановлення pnpm та збірка лок-файлу (для CI частини)
+      - name: 📦 Install pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 9
 
-      - name: 🟢 Налаштування Node.js (з кешем pnpm)
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'pnpm' # 👈 Це пришвидшить наступні білди!
+          node-version: '20'
+          cache: 'pnpm'
 
-      - name: 📥 Встановлення бібліотек
+      - name: 📥 Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: 🛠️ Збірка проєкту (Build)
-        run: pnpm run build
-      
-      - name: 🐳 Build Docker Image
-        run: docker build -t react-app:${{ github.sha }} .
+      # 4. Збірка Docker-образу та Push у Google Artifact Registry
+      - name: 📤 Build and Push Container
+        run: |
+          DOCKER_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          docker build -t $DOCKER_TAG .
+          docker push $DOCKER_TAG
+
+      # 5. Деплой у Google Cloud Run
+      - name: 🚀 Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker-pkg-dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          flags: '--allow-unauthenticated' # Робить сайт публічним
