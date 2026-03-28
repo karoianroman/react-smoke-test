@@ -43,7 +43,7 @@ jobs:
       - name: 🐳 Docker Auth
         run: |
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
-             
+
       # Test
       - name: 📦 Install pnpm
         uses: pnpm/action-setup@v3
@@ -80,9 +80,9 @@ jobs:
           flags: '--allow-unauthenticated' # Робить сайт публічним
 
       - name: 🔥 Smoke test
-  run: |
-    URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
-      --region=${{ env.REGION }} \
-      --format='value(status.url)')
-    echo "Testing: $URL"
-    curl -f --retry 5 --retry-delay 3 "$URL"
+        run: |
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.REGION }} \
+            --format='value(status.url)')
+          echo "Testing: $URL"
+          curl -f --retry 5 --retry-delay 3 "$URL"
