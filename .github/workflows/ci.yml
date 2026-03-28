@@ -11,7 +11,7 @@ env:
   REGION: europe-west1 # Обирай ближчий до тебе регіон
   SERVICE_NAME: react-app # Назва сервісу в Cloud Run
   REPOSITORY: react-repo # Назва репозиторію в Artifact Registry
-  
+
 permissions:
   contents: read    # Дозволяє зчитувати код репозиторію
   id-token: write   # ЦЕ НАЙВАЖЛИВІШЕ: дозволяє GitHub генерувати токен для Google Cloud
